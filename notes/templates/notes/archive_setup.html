@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-lock me-2"></i>Setup Archive Security</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        To protect your archived notes, please set up a PIN code. You'll need this PIN to access your archive in the future.
+                    </p>
+                    <form id="setupPinForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Enter PIN Code</label>
+                            <input type="password" class="form-control" name="pin_code" required minlength="4" maxlength="8" pattern="[0-9]*" inputmode="numeric">
+                            <div class="form-text">PIN must be 4-8 digits</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Confirm PIN Code</label>
+                            <input type="password" class="form-control" name="confirm_pin" required minlength="4" maxlength="8" pattern="[0-9]*" inputmode="numeric">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-save me-2"></i>Save PIN
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('setupPinForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const pinCode = this.querySelector('[name=pin_code]').value;
+    const confirmPin = this.querySelector('[name=confirm_pin]').value;
+    
+    if (!/^\d{4,8}$/.test(pinCode)) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Invalid PIN',
+            text: 'PIN must be 4-8 digits'
+        });
+        return;
+    }
+    
+    if (pinCode !== confirmPin) {
+        Swal.fire({
+            icon: 'error',
+            title: 'PIN Mismatch',
+            text: 'The PINs you entered do not match'
+        });
+        return;
+    }
+    
+    try {
+        const response = await fetch('/setup-archive-pin/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: `pin_code=${encodeURIComponent(pinCode)}`
+        });
+        
+        if (!response.ok) throw new Error('Failed to set PIN');
+        
+        Swal.fire({
+            icon: 'success',
+            title: 'PIN Set Successfully',
+            text: 'Your archive is now protected! You will need this PIN to access your archived notes.',
+            confirmButtonText: 'Go to Archive',
+            allowOutsideClick: false
+        }).then(() => {
+            window.location.href = '/archive/';
+        });
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to set PIN. Please try again.'
+        });
+    }
+});
+</script>
+{% endblock %} 

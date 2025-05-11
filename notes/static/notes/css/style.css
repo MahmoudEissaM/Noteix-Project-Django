@@ -1,0 +1,239 @@
+/* Dashboard Grid Layout */
+.bear-dashboard-grid {
+    display: grid;
+    grid-template-columns: 200px 300px 1fr;
+    height: calc(100vh - 56px);
+    background-color: #fff;
+}
+
+/* Sidebar Styles */
+.bear-sidebar {
+    padding: 20px;
+    border-right: 1px solid #e0e0e0;
+    background-color: #f8f9fa;
+}
+
+.bear-sidebar-header {
+    color: #333;
+}
+
+.bear-tags-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.bear-tags-list li {
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    color: #666;
+}
+
+.bear-tags-list li:hover {
+    background-color: #e9ecef;
+}
+
+.bear-tags-list li.active {
+    background-color: #e9ecef;
+    color: #007bff;
+}
+
+/* Notes List Styles */
+.bear-notes-list {
+    padding: 20px;
+    border-right: 1px solid #e0e0e0;
+    background-color: #fff;
+}
+
+.bear-notes-scroll {
+    height: calc(100vh - 140px);
+    overflow-y: auto;
+}
+
+.bear-note-card {
+    padding: 15px;
+    border-bottom: 1px solid #e0e0e0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.bear-note-card:hover {
+    background-color: #f8f9fa;
+}
+
+.bear-note-card.active {
+    background-color: #e9ecef;
+}
+
+.bear-note-title {
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.bear-note-snippet {
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.bear-note-date {
+    font-size: 0.8em;
+    color: #999;
+}
+
+/* Note Detail Styles */
+.bear-note-detail {
+    padding: 30px;
+    background-color: #fff;
+}
+
+.bear-note-detail-header {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.bear-note-detail-title {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.bear-note-detail-content {
+    color: #444;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.bear-note-detail-actions {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+}
+
+/* Toast Notification Styles */
+.noteix-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: white;
+    padding: 15px 20px;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+
+.noteix-toast.success .icon {
+    color: #28a745;
+}
+
+.noteix-toast.error .icon {
+    color: #dc3545;
+}
+
+.noteix-toast .message {
+    color: #333;
+}
+
+.noteix-toast .progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #f0f0f0;
+}
+
+.noteix-toast .progress-bar {
+    width: 100%;
+    height: 100%;
+    background: #007bff;
+}
+
+/* Modal Styles */
+.modal-content {
+    border-radius: 8px;
+}
+
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #e0e0e0;
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+/* Sweet Alert Custom Styling */
+.swal2-popup {
+    border-radius: 15px !important;
+    padding: 2em !important;
+}
+
+.swal2-title {
+    font-size: 1.5em !important;
+    color: #333 !important;
+}
+
+.swal2-html-container {
+    font-size: 1.1em !important;
+    color: #666 !important;
+}
+
+.swal2-confirm {
+    background-color: #dc3545 !important;
+    border-radius: 8px !important;
+}
+
+.swal2-cancel {
+    background-color: #6c757d !important;
+    border-radius: 8px !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .bear-dashboard-grid {
+        grid-template-columns: 180px 300px 1fr;
+    }
+}
+
+@media (max-width: 992px) {
+    .bear-dashboard-grid {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+    
+    .bear-sidebar,
+    .bear-notes-list,
+    .bear-note-detail {
+        height: auto;
+        min-height: 300px;
+    }
+} 

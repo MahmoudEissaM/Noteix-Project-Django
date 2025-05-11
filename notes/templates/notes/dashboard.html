@@ -1,0 +1,552 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-minimal@4/minimal.css">
+<!-- FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<!-- Custom CSS -->
+<link rel="stylesheet" href="{% static 'notes/css/style.css' %}">
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<form style="display:none;">{% csrf_token %}</form>
+
+<div class="bear-dashboard-grid">
+    <!-- Sidebar -->
+    <aside class="bear-sidebar">
+        <div class="bear-sidebar-header mb-4">
+            <h4 class="mb-0">Categories</h4>
+        </div>
+        <ul class="bear-tags-list">
+            <li class="{% if current_category == 'All' %}active{% endif %}" data-category="All">
+                <i class="fas fa-folder fa-fw me-2"></i> All
+            </li>
+            <li class="{% if current_category == 'Important' %}active{% endif %}" data-category="Important">
+                <i class="fas fa-star fa-fw me-2"></i> Important
+            </li>
+            <li class="{% if current_category == 'Tasks' %}active{% endif %}" data-category="Tasks">
+                <i class="fas fa-check-circle fa-fw me-2"></i> Tasks
+            </li>
+            <li class="{% if current_category == 'Study' %}active{% endif %}" data-category="Study">
+                <i class="fas fa-bookmark fa-fw me-2"></i> Study
+            </li>
+            <li class="{% if current_category == 'Personal' %}active{% endif %}" data-category="Personal">
+                <i class="fas fa-heart fa-fw me-2"></i> Personal
+            </li>
+</ul>
+        <div class="mt-4">
+            <a href="{% url 'archive' %}" class="btn btn-outline-secondary w-100">
+                <i class="fas fa-archive me-2"></i>Archive
+            </a>
+        </div>
+    </aside>
+
+    <!-- Notes List -->
+    <section class="bear-notes-list">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0">Notes</h5>
+            <button class="btn btn-primary btn-sm" onclick="showAddNoteModal()">
+                <i class="fas fa-plus me-1"></i> Add Note
+            </button>
+        </div>
+        <div class="bear-notes-scroll">
+        {% if notes %}
+            {% for note in notes %}
+                <div class="bear-note-card {% if forloop.first %}active{% endif %}" 
+                     data-note-id="{{ note.id }}" 
+                     data-category="{{ note.category|default:'All' }}"
+                     onclick="loadNoteDetails('{{ note.id }}')">
+                    <div class="d-flex justify-content-between">
+            <div>
+                            <div class="bear-note-title">{{ note.title }}</div>
+                            <div class="bear-note-snippet">{{ note.content|truncatechars:50 }}</div>
+                            <div class="bear-note-date">{{ note.created_at|date:'M d' }}</div>
+                        </div>
+                        <div class="dropdown" onclick="event.stopPropagation()">
+                            <button class="btn btn-link text-decoration-none p-0" data-bs-toggle="dropdown">
+    {% if note.category == 'Important' %}
+                                    <i class="fas fa-star text-warning"></i>
+    {% elif note.category == 'Tasks' %}
+                                    <i class="fas fa-check-circle text-success"></i>
+    {% elif note.category == 'Study' %}
+                                    <i class="fas fa-bookmark text-info"></i>
+    {% elif note.category == 'Personal' %}
+                                    <i class="fas fa-heart text-danger"></i>
+    {% else %}
+                                    <i class="fas fa-folder text-secondary"></i>
+    {% endif %}
+</button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <button class="dropdown-item" onclick="changeNoteCategory('{{ note.id }}', 'All')">
+                                        <i class="fas fa-folder fa-fw me-2 text-secondary"></i>All
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item" onclick="changeNoteCategory('{{ note.id }}', 'Important')">
+                                        <i class="fas fa-star fa-fw me-2 text-warning"></i>Important
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item" onclick="changeNoteCategory('{{ note.id }}', 'Tasks')">
+                                        <i class="fas fa-check-circle fa-fw me-2 text-success"></i>Tasks
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item" onclick="changeNoteCategory('{{ note.id }}', 'Study')">
+                                        <i class="fas fa-bookmark fa-fw me-2 text-info"></i>Study
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item" onclick="changeNoteCategory('{{ note.id }}', 'Personal')">
+                                        <i class="fas fa-heart fa-fw me-2 text-danger"></i>Personal
+                                    </button>
+                                </li>
+                            </ul>
+    </div>
+  </div>
+</div>
+{% endfor %}
+        {% else %}
+                <div class="text-center text-muted mt-4">No notes in this category</div>
+        {% endif %}
+        </div>
+    </section>
+
+    <!-- Note Detail -->
+    <section class="bear-note-detail" id="noteDetailSection">
+        {% if notes %}
+        {% with note=notes.0 %}
+            <div class="bear-note-detail-header">
+                <h2 class="bear-note-detail-title">{{ note.title }}</h2>
+                <div class="text-muted mt-2">
+                    <i class="fas fa-calendar-alt me-2"></i>{{ note.created_at|date:'M d, Y H:i' }}
+                </div>
+        </div>
+        <div class="bear-note-detail-content">
+                {{ note.content|linebreaksbr }}
+            {% if note.link %}
+                <div class="mt-3">
+                    <a href="{{ note.link }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-link me-1"></i>Open Reference
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="bear-note-detail-actions">
+                <button class="btn btn-outline-primary me-2" onclick="editNote('{{ note.id }}')">
+                    <i class="fas fa-edit me-1"></i>Edit
+                </button>
+                <button class="btn btn-outline-danger" onclick="confirmDelete('{{ note.id }}')">
+                    <i class="fas fa-trash me-1"></i>Delete
+                </button>
+            </div>
+            {% endwith %}
+        {% else %}
+            <div class="text-center text-muted mt-4">Select a note to view details</div>
+            {% endif %}
+    </section>
+</div>
+
+<!-- Add Note Modal -->
+<div class="modal fade" id="addNoteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>New Note
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addNoteForm" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-heading me-1"></i>Title
+                        </label>
+                        <input type="text" name="title" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-align-left me-1"></i>Content
+                        </label>
+                        <textarea name="content" class="form-control" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-link me-1"></i>Reference Link (optional)
+                        </label>
+                        <input type="url" name="link" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-tag me-1"></i>Category
+                        </label>
+                        <select name="category" class="form-select" required>
+                            <option value="All">All</option>
+                            <option value="Important">Important</option>
+                            <option value="Tasks">Tasks</option>
+                            <option value="Study">Study</option>
+                            <option value="Personal">Personal</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Add Note
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Note Modal -->
+<div class="modal fade" id="editNoteModal" tabindex="-1">
+  <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Edit Note
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+            <form id="editNoteForm" method="post">
+        {% csrf_token %}
+                <input type="hidden" id="editNoteId" name="note_id">
+        <div class="modal-body">
+          <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-heading me-1"></i>Title
+                        </label>
+                        <input type="text" name="title" id="editNoteTitle" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-align-left me-1"></i>Content
+                        </label>
+                        <textarea name="content" id="editNoteContent" class="form-control" rows="4" required></textarea>
+          </div>
+          <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-link me-1"></i>Reference Link (optional)
+                        </label>
+                        <input type="url" name="link" id="editNoteLink" class="form-control">
+          </div>
+          <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-tag me-1"></i>Category
+                        </label>
+                        <select name="category" id="editNoteCategory" class="form-select" required>
+                            <option value="All">All</option>
+                            <option value="Important">Important</option>
+                            <option value="Tasks">Tasks</option>
+                            <option value="Study">Study</option>
+                            <option value="Personal">Personal</option>
+                        </select>
+          </div>
+        </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Save Changes
+                    </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# Store Django template data #}
+<script>
+    window.djangoMessages = [
+        {% if messages %}
+            {% for message in messages %}
+                {
+                    text: "{{ message|escapejs }}",
+                    type: "{{ message.tags|escapejs }}"
+                }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        {% endif %}
+    ];
+</script>
+
+{# Pure JavaScript #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+        // Show notifications
+        if (window.djangoMessages && window.djangoMessages.length) {
+            window.djangoMessages.forEach(msg => {
+                showNotification(msg.text, msg.type);
+            });
+        }
+
+        // Category selection
+        document.querySelectorAll('.bear-tags-list li').forEach(item => {
+            item.addEventListener('click', function() {
+                const category = this.dataset.category;
+                window.location.href = `?category=${category}`;
+            });
+        });
+
+        // Add click event listeners for note cards
+        document.querySelectorAll('.bear-note-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const noteId = this.dataset.noteId;
+                if (noteId) {
+                    loadNoteDetails(noteId);
+                }
+            });
+        });
+    });
+</script>
+
+<script>
+    // Toast Notification Function
+    function showNotification(type, message) {
+        const toast = document.createElement('div');
+        toast.className = `noteix-toast ${type}`;
+        
+        const icon = type === 'success' ? 'check-circle' : 
+                     type === 'error' ? 'times-circle' : 'info-circle';
+        
+        toast.innerHTML = `
+            <i class="fas fa-${icon} icon"></i>
+            <span class="message">${message}</span>
+            <div class="progress">
+                <div class="progress-bar"></div>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Start progress bar animation
+        const progressBar = toast.querySelector('.progress-bar');
+        progressBar.style.transition = 'width 3s linear';
+        setTimeout(() => progressBar.style.width = '0%', 100);
+        
+        // Remove toast after animation
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // Load Note Details
+    async function loadNoteDetails(noteId) {
+        try {
+            const response = await fetch(`/api/notes/${noteId}/`);
+            if (!response.ok) throw new Error('Failed to load note');
+            
+            const note = await response.json();
+            
+            // Update active state
+            document.querySelectorAll('.bear-note-card').forEach(card => {
+                card.classList.toggle('active', card.dataset.noteId === String(noteId));
+            });
+            
+            // Update detail section
+            document.getElementById('noteDetailSection').innerHTML = `
+                <div class="bear-note-detail-header">
+                    <h2 class="bear-note-detail-title">${note.title}</h2>
+                    <div class="text-muted mt-2">
+                        <i class="fas fa-calendar-alt me-2"></i>${new Date(note.created_at).toLocaleString()}
+                    </div>
+                </div>
+                <div class="bear-note-detail-content">
+                    ${note.content.replace(/\n/g, '<br>')}
+                    ${note.link ? `
+                        <div class="mt-3">
+                            <a href="${note.link}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-link me-1"></i>Open Reference
+                            </a>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="bear-note-detail-actions">
+                    <button class="btn btn-outline-primary me-2" onclick="editNote(${note.id})">
+                        <i class="fas fa-edit me-1"></i>Edit
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="confirmDelete(${note.id})">
+                        <i class="fas fa-trash me-1"></i>Delete
+                    </button>
+                </div>
+            `;
+        } catch (error) {
+            showNotification('error', 'Failed to load note details');
+        }
+    }
+
+    // Delete Note
+    async function deleteNote(noteId) {
+        try {
+            const response = await fetch(`/move-to-archive/${noteId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+            });
+            
+            if (!response.ok) throw new Error('Failed to move note to archive');
+            
+            // Remove note card
+            const noteCard = document.querySelector(`.bear-note-card[data-note-id="${noteId}"]`);
+            if (noteCard) {
+                noteCard.remove();
+                
+                // Clear detail view if this was the active note
+                if (noteCard.classList.contains('active')) {
+                    document.getElementById('noteDetailSection').innerHTML = 
+                        '<div class="text-center text-muted mt-4">Select a note to view details</div>';
+                }
+            }
+            
+            showNotification('success', 'Note moved to archive');
+        } catch (error) {
+            showNotification('error', 'Failed to move note to archive');
+        }
+    }
+
+    // Delete confirmation
+    function confirmDelete(noteId) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This note will be moved to archive. You can restore it later.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, archive it',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                deleteNote(noteId);
+            }
+        });
+    }
+
+    // Edit Note
+    async function editNote(noteId) {
+        try {
+            const response = await fetch(`/api/notes/${noteId}/`);
+            if (!response.ok) throw new Error('Failed to load note');
+            
+            const note = await response.json();
+            
+            // Fill the edit form with note data
+            document.getElementById('editNoteId').value = note.id;
+            document.getElementById('editNoteTitle').value = note.title;
+            document.getElementById('editNoteContent').value = note.content;
+            document.getElementById('editNoteLink').value = note.link || '';
+            document.getElementById('editNoteCategory').value = note.category;
+            
+            // Show the modal
+            new bootstrap.Modal(document.getElementById('editNoteModal')).show();
+        } catch (error) {
+            showNotification('error', 'Failed to load note details');
+        }
+    }
+
+    // Edit Note Form submission handler
+    document.getElementById('editNoteForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+        
+        const noteId = document.getElementById('editNoteId').value;
+        
+        try {
+            const formData = new FormData(this);
+            const response = await fetch(`/edit/${noteId}/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+            
+            if (!response.ok) throw new Error('Failed to update note');
+            
+            // Close modal and show success notification
+            bootstrap.Modal.getInstance(document.getElementById('editNoteModal')).hide();
+            showNotification('success', 'Note updated successfully');
+            
+            // Reload page to show updated note
+            setTimeout(() => window.location.reload(), 1000);
+        } catch (error) {
+            showNotification('error', 'Failed to update note');
+        }
+    });
+
+    // Form submission handler
+    document.getElementById('addNoteForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            const formData = new FormData(this);
+            const response = await fetch('/dashboard/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+            
+            if (!response.ok) throw new Error('Failed to add note');
+            
+            // Close modal and show success notification
+            bootstrap.Modal.getInstance(document.getElementById('addNoteModal')).hide();
+            showNotification('success', 'Note added successfully');
+            
+            // Reload page to show new note
+            setTimeout(() => window.location.reload(), 1000);
+        } catch (error) {
+            showNotification('error', 'Failed to add note');
+        }
+    });
+
+    // Add this at the beginning of your script section
+    function showAddNoteModal() {
+        // Get current category from URL or default to 'All'
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentCategory = urlParams.get('category') || 'All';
+        
+        // Set the category in the modal
+        document.querySelector('#addNoteModal select[name="category"]').value = currentCategory;
+        
+        // Show the modal
+        new bootstrap.Modal(document.getElementById('addNoteModal')).show();
+    }
+
+    // Change Note Category
+    async function changeNoteCategory(noteId, newCategory) {
+        try {
+            const response = await fetch(`/change_category/${noteId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+                body: JSON.stringify({ category: newCategory })
+            });
+
+            if (!response.ok) throw new Error('Failed to change category');
+
+            // Show success notification
+            showNotification('success', 'Category updated successfully');
+            
+            // Reload the page after a short delay
+            setTimeout(() => window.location.reload(), 1000);
+        } catch (error) {
+            showNotification('error', 'Failed to change category');
+        }
+}
+</script>
+{% endblock %}

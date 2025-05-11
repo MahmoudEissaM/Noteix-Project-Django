@@ -1,0 +1,397 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Profile{% endblock %}
+
+{% block extra_head %}
+<style>
+    body {
+        background: #f8f9fa;
+        color: #333;
+    }
+    
+    .profile-header {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        padding: 3rem 0;
+        margin-bottom: 3rem;
+        color: white;
+        border-bottom: 1px solid #333;
+    }
+    
+    .profile-image-container {
+        position: relative;
+        width: 200px;
+        height: 200px;
+        margin: 0 auto;
+    }
+    
+    .profile-image {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        border: 4px solid #fff;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        object-fit: cover;
+        transition: all 0.3s ease;
+    }
+    
+    .profile-image:hover {
+        border-color: #007bff;
+        transform: scale(1.02);
+    }
+    
+    .camera-button {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background: #fff;
+        color: #333;
+        border: 2px solid #ddd;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .camera-button:hover {
+        transform: scale(1.1);
+        background: #007bff;
+        border-color: #0056b3;
+        color: #fff;
+    }
+    
+    .stats-card {
+        background: #fff;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        border: 1px solid #e9ecef;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        border-color: #007bff;
+    }
+    
+    .form-control {
+        background: #fff;
+        border: 1px solid #ced4da;
+        color: #333;
+        border-radius: 10px;
+    }
+    
+    .form-control:focus {
+        background: #fff;
+        border-color: #007bff;
+        color: #333;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    .btn {
+        border-radius: 10px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+        background: #007bff;
+        border-color: #0056b3;
+    }
+    
+    .btn-primary:hover {
+        background: #0056b3;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+    }
+    
+    .btn-outline-light {
+        border-color: #fff;
+        color: #fff;
+    }
+    
+    .btn-outline-light:hover {
+        background: #fff;
+        color: #333;
+        transform: translateY(-2px);
+    }
+    
+    .card {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 15px;
+    }
+    
+    .card-title {
+        color: #333;
+        font-weight: 600;
+    }
+    
+    .text-muted {
+        color: #6c757d !important;
+    }
+    
+    .modal-content {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 15px;
+        color: #333;
+    }
+    
+    .modal-header {
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .modal-footer {
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .btn-close {
+        filter: none;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        border: none;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(108, 117, 125, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Profile Header -->
+<div class="profile-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-4 text-center">
+                <div class="profile-image-container mb-3">
+                    {% if user.profile.image %}
+                        <img src="{{ user.profile.image.url }}" alt="Profile Picture" class="profile-image">
+                    {% else %}
+                        <img src="{% static 'images/default.png' %}" alt="Default Profile Picture" class="profile-image">
+                    {% endif %}
+                    <button type="button" class="camera-button btn btn-light" data-bs-toggle="modal" data-bs-target="#updateProfilePicModal">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <h2 class="mb-2">{{ user.get_full_name|default:user.username }}</h2>
+                <p class="text-white-50 mb-3">@{{ user.username }}</p>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                        <i class="fas fa-edit me-2"></i>Edit Profile
+                    </button>
+                    <button class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                        <i class="fas fa-key me-2"></i>Change Password
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Section -->
+<div class="container mb-5">
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="stats-card text-center">
+                <i class="fas fa-sticky-note fa-2x mb-3 text-primary"></i>
+                <h3 class="mb-1">{{ total_notes|default:"0" }}</h3>
+                <p class="text-muted mb-0">Total Notes</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card text-center">
+                <i class="fas fa-star fa-2x mb-3 text-warning"></i>
+                <h3 class="mb-1">{{ important_notes|default:"0" }}</h3>
+                <p class="text-muted mb-0">Important Notes</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card text-center">
+                <i class="fas fa-archive fa-2x mb-3 text-info"></i>
+                <h3 class="mb-1">{{ archived_notes|default:"0" }}</h3>
+                <p class="text-muted mb-0">Archived Notes</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Information -->
+<div class="container mb-5">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h4 class="card-title mb-4">Profile Information</h4>
+            <div class="row mb-3">
+                <div class="col-sm-3">
+                    <p class="text-muted mb-0">Full Name</p>
+                </div>
+                <div class="col-sm-9">
+                    <p class="mb-0">{{ user.get_full_name|default:"Not set" }}</p>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-sm-3">
+                    <p class="text-muted mb-0">Email</p>
+                </div>
+                <div class="col-sm-9">
+                    <p class="mb-0">{{ user.email }}</p>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-sm-3">
+                    <p class="text-muted mb-0">Username</p>
+                </div>
+                <div class="col-sm-9">
+                    <p class="mb-0">{{ user.username }}</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3">
+                    <p class="text-muted mb-0">Joined</p>
+                </div>
+                <div class="col-sm-9">
+                    <p class="mb-0">{{ user.date_joined|date:"F j, Y" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Profile Picture Modal -->
+<div class="modal fade" id="updateProfilePicModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Profile Picture</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'update_profile_pic' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <div class="position-relative d-inline-block">
+                            <img id="imagePreview" src="{% if user.profile.image %}{{ user.profile.image.url }}{% else %}{% static 'images/default.png' %}{% endif %}" 
+                                 alt="Profile Preview" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Choose New Picture</label>
+                        {{ image_form.image|add_class:"form-control" }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Picture</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                    {% csrf_token %}
+                <input type="hidden" name="update_profile" value="1">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        {{ profile_form.username|add_class:"form-control" }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        {{ profile_form.email|add_class:"form-control" }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+                </form>
+            </div>
+        </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'change_password' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {% for field in password_form %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            {% for error in field.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Change Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Image preview functionality
+    const imageInput = document.querySelector('input[type="file"]');
+    const imagePreview = document.getElementById('imagePreview');
+    
+    if (imageInput && imagePreview) {
+        imageInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+    
+    // Auto-hide messages
+    const messages = document.querySelectorAll('.alert');
+    messages.forEach(message => {
+        setTimeout(() => {
+            message.classList.add('fade');
+            setTimeout(() => message.remove(), 500);
+        }, 3000);
+    });
+});
+</script>
+{% endblock %}
+
+{% endblock %}
